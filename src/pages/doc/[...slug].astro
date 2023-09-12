@@ -1,0 +1,72 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content'
+import MainLayout from '../../layouts/MainLayout.astro'
+
+export async function getStaticPaths() {
+  const docs = await getCollection('doc')
+  return docs.map((doc) => ({
+    params: { slug: doc.slug },
+    props: doc,
+  }))
+}
+type Props = CollectionEntry<'doc'>
+
+const sections = await Astro.glob('../../content/doc/*.md')
+const struct = sections.map((hip) => {
+  return {
+    article: hip?.frontmatter?.title ?? '',
+    hiperVinculos: hip.getHeadings(),
+  }
+})
+
+const url = Astro.url
+const doc = Astro.props
+const { Content } = await doc.render()
+---
+
+<MainLayout title={doc.data.title} description={doc.data.description}>
+  <aside class='w-72 fixed bottom-0 left-0 top-20 pl-6 pr-4 z-10'>
+    <nav class='block p-0 w-full overflow-auto text-sm h-full'>
+      <ul class='flex flex-col space-y-2 pt-4 pb-52 w-full'>
+        {
+          sections.map((section) => {
+            const file = section.file.split('/')
+            const name = file[file.length - 1].split('.')[0]
+            return (
+              <a href={`/doc/${name}`} class='text-start rounded-md hover:bg-zinc-400 py-1 px-4 '>
+                {section.frontmatter.title}
+              </a>
+            )
+          })
+        }
+      </ul>
+    </nav>
+  </aside>
+  <section class='flex flex-col items-center h-full min-w-0 w-full'>
+    <main class='max-w-3xl w-full text-base'>
+      <Content />
+    </main>
+  </section>
+  <aside class='w-72 fixed bottom-0 right-0 top-20 z-10'>
+    <nav class='block p-0 w-full overflow-auto text-sm h-full'>
+      <ul class='flex flex-col space-y-2 pt-4 pb-28 w-full'>
+        {
+          struct.map((section) => {
+            if (doc.data.title === section.article) {
+              return section.hiperVinculos.map((vinculo) => {
+                // scrollToSmoth(vinculo.slug)
+                return (
+                  <a href={`#${vinculo.slug}`} class='text-start rounded-md hover:bg-zinc-400 py-1 px-4'>
+                    {vinculo.text}
+                  </a>
+                )
+              })
+            } else {
+              return null
+            }
+          })
+        }
+      </ul>
+    </nav>
+  </aside>
+</MainLayout>
